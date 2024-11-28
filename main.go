@@ -37,18 +37,18 @@ type IssuesEvent struct {
 	} `json:"label"`
 }
 
-func checkStatusCode(statusCode int) error {
-
+func checkStatusCode(statusCode int) (string, error) {
+	var s string
 	if statusCode == 200 || statusCode == 304 {
-		fmt.Printf("Success\n")
+		s = "Success"
 	} else if statusCode == 403 {
-		return fmt.Errorf("forbidden")
+		return "", fmt.Errorf("forbidden")
 	} else if statusCode == 404 {
-		return fmt.Errorf("not found")
+		return "", fmt.Errorf("not found")
 	} else if statusCode == 503 {
-		return fmt.Errorf("service unavailable")
+		return "", fmt.Errorf("service unavailable")
 	}
-	return nil
+	return s, nil
 }
 
 func parseCreateEvent(payload json.RawMessage, reponame string) error {
@@ -129,7 +129,7 @@ func main() {
 
 	defer resp.Body.Close()
 
-	err = checkStatusCode(resp.StatusCode)
+	_, err = checkStatusCode(resp.StatusCode)
 
 	if err != nil {
 		panic(err)

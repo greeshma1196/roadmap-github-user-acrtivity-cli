@@ -11,26 +11,34 @@ import (
 func TestCheckStatusCode(t *testing.T) {
 	t.Run("Successfully validates success status code", func(t *testing.T) {
 		statusCode := 200
-		err := checkStatusCode(statusCode)
+		exp := "Success"
+		s, err := checkStatusCode(statusCode)
 		require.Nil(t, err)
+		require.Equal(t, exp, s)
 	})
 
 	t.Run("Successfully validates forbidden status code", func(t *testing.T) {
 		statusCode := 403
-		err := checkStatusCode(statusCode)
-		require.EqualError(t, err, "forbidden")
+		exp := "forbidden"
+		s, err := checkStatusCode(statusCode)
+		require.EqualError(t, err, exp)
+		require.Empty(t, s)
 	})
 
 	t.Run("Successfully validates not found status code", func(t *testing.T) {
 		statusCode := 404
-		err := checkStatusCode(statusCode)
-		require.EqualError(t, err, "not found")
+		exp := "not found"
+		s, err := checkStatusCode(statusCode)
+		require.EqualError(t, err, exp)
+		require.Empty(t, s)
 	})
 
 	t.Run("Successfully validates service unavailable status code", func(t *testing.T) {
 		statusCode := 503
-		err := checkStatusCode(statusCode)
-		require.EqualError(t, err, "service unavailable")
+		exp := "service unavailable"
+		s, err := checkStatusCode(statusCode)
+		require.EqualError(t, err, exp)
+		require.Empty(t, s)
 	})
 }
 
