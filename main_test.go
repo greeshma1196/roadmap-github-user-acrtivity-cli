@@ -521,3 +521,109 @@ func TestParsePullRequestEvent(t *testing.T) {
 		require.Empty(t, s)
 	})
 }
+
+func TestParsePushEvent(t *testing.T) {
+	t.Run("Successfully validates PushEvent for a single commit", func(t *testing.T) {
+		payload := `{
+						"push_id": 2020202020,
+						"size": 1,
+						"distinct_size": 1,
+						"ref": "refs/heads/feature-branch",
+						"head": "abcd1234efgh5678ijkl9012mnop3456qrst7890",
+						"before": "9876543210fedcba0987654321fedcba09876543",
+						"commits": [
+							{
+							"sha": "abcd1234efgh5678ijkl9012mnop3456qrst7890",
+							"author": {
+								"email": "collabUser@example.com",
+								"name": "collabUser"
+							},
+							"message": "Initial commit on feature-branch",
+							"distinct": true,
+							"url": "https://api.github.com/repos/collabUser/another-project/commits/abcd1234efgh5678ijkl9012mnop3456qrst7890"
+							}
+						]
+					}`
+		reponame := "devUser/awesome-project"
+		size := 1
+		exp := fmt.Sprintf("Pushed %d commit to %s", size, reponame)
+		s, err := parsePushEvent(json.RawMessage(payload), reponame)
+		require.Nil(t, err)
+		require.Equal(t, exp, s)
+	})
+	t.Run("Successfully validates PushEvent for multiple commits", func(t *testing.T) {
+		payload := `{
+					"push_id": 1010101010,
+					"size": 2,
+					"distinct_size": 2,
+					"ref": "refs/heads/main",
+					"head": "a1b2c3d4e5f67890abcdef1234567890abcdef12",
+					"before": "1234567890abcdef1234567890abcdef12345678",
+					"commits": [
+						{
+						"sha": "a1b2c3d4e5f67890abcdef1234567890abcdef12",
+						"author": {
+							"email": "devUser@example.com",
+							"name": "devUser"
+						},
+						"message": "Add feature X implementation",
+						"distinct": true,
+						"url": "https://api.github.com/repos/devUser/awesome-project/commits/a1b2c3d4e5f67890abcdef1234567890abcdef12"
+						},
+						{
+						"sha": "1234abcd5678ef90abcdef1234567890abcdef13",
+						"author": {
+							"email": "collaborator@example.com",
+							"name": "collaboratorUser"
+						},
+						"message": "Fix bug Y in feature X",
+						"distinct": true,
+						"url": "https://api.github.com/repos/devUser/awesome-project/commits/1234abcd5678ef90abcdef1234567890abcdef13"
+						}
+					]
+				}`
+		reponame := "devUser/awesome-project"
+		size := 2
+		exp := fmt.Sprintf("Pushed %d commits to %s", size, reponame)
+		s, err := parsePushEvent(json.RawMessage(payload), reponame)
+		require.Nil(t, err)
+		require.Equal(t, exp, s)
+	})
+	t.Run("Successfully validates error for PushEvent", func(t *testing.T) {
+		payload := `{
+					"push_id": 1010101010,
+					"size": 0,
+					"distinct_size": 2,
+					"ref": "refs/heads/main",
+					"head": "a1b2c3d4e5f67890abcdef1234567890abcdef12",
+					"before": "1234567890abcdef1234567890abcdef12345678",
+					"commits": [
+						{
+						"sha": "a1b2c3d4e5f67890abcdef1234567890abcdef12",
+						"author": {
+							"email": "devUser@example.com",
+							"name": "devUser"
+						},
+						"message": "Add feature X implementation",
+						"distinct": true,
+						"url": "https://api.github.com/repos/devUser/awesome-project/commits/a1b2c3d4e5f67890abcdef1234567890abcdef12"
+						},
+						{
+						"sha": "1234abcd5678ef90abcdef1234567890abcdef13",
+						"author": {
+							"email": "collaborator@example.com",
+							"name": "collaboratorUser"
+						},
+						"message": "Fix bug Y in feature X",
+						"distinct": true,
+						"url": "https://api.github.com/repos/devUser/awesome-project/commits/1234abcd5678ef90abcdef1234567890abcdef13"
+						}
+					]
+				}`
+		reponame := "devUser/awesome-project"
+		exp := "unable to parse"
+		s, err := parsePushEvent(json.RawMessage(payload), reponame)
+		require.EqualError(t, err, exp)
+		require.Empty(t, s)
+	})
+}
