@@ -51,23 +51,24 @@ func checkStatusCode(statusCode int) (string, error) {
 	return s, nil
 }
 
-func parseCreateEvent(payload json.RawMessage, reponame string) error {
+func parseCreateEvent(payload json.RawMessage, reponame string) (string, error) {
+	var s string
 	var cresp CreateEvent
 	if err := json.Unmarshal(payload, &cresp); err != nil {
 		panic(err)
 	}
 
 	if cresp.RefType == "repository" {
-		fmt.Printf("Created new repository %s\n", reponame)
+		s = fmt.Sprintf("Created new repository %s", reponame)
 	} else if cresp.RefType == "branch" {
-		fmt.Printf("Created new branch %s\n", reponame)
+		s = fmt.Sprintf("Created new branch %s", reponame)
 	} else if cresp.RefType == "tag" {
-		fmt.Printf("Created new tag %s\n", reponame)
+		s = fmt.Sprintf("Created new tag %s", reponame)
 	} else {
-		return fmt.Errorf("unable to parse, reference type is empty")
+		return "", fmt.Errorf("unable to parse, reference type is empty")
 	}
 
-	return nil
+	return s, nil
 }
 
 func parseDeleteEvent(payload json.RawMessage, reponame string) error {
@@ -142,10 +143,11 @@ func main() {
 
 	for _, event := range cresp {
 		if event.Type == "CreateEvent" {
-			err := parseCreateEvent(event.Payload, event.Repo.Name)
+			s, err := parseCreateEvent(event.Payload, event.Repo.Name)
 			if err != nil {
 				panic(err)
 			}
+			fmt.Println(s)
 		} else if event.Type == "DeleteEvent" {
 			err := parseDeleteEvent(event.Payload, event.Repo.Name)
 			if err != nil {
