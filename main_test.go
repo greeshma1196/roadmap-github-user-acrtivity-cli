@@ -171,7 +171,7 @@ func TestParseIssuesEvent(t *testing.T) {
 		exp := fmt.Sprintf("Issue %d. %s for %s is opened\n", issuenum, issuetitle, reponame)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
-		require.Equal(t, s, exp)
+		require.Equal(t, exp, s)
 	})
 
 	t.Run("Successfully validates IssuesEvent for edited issue", func(t *testing.T) {
@@ -199,7 +199,7 @@ func TestParseIssuesEvent(t *testing.T) {
 		exp := fmt.Sprintf("Issue %d. %s for %s is edited\n", issuenum, issuetitle, reponame)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
-		require.Equal(t, s, exp)
+		require.Equal(t, exp, s)
 	})
 
 	t.Run("Successfully validates IssuesEvent for closed issue", func(t *testing.T) {
@@ -218,7 +218,7 @@ func TestParseIssuesEvent(t *testing.T) {
 		exp := fmt.Sprintf("Issue %d. %s for %s is closed\n", issuenum, issuetitle, reponame)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
-		require.Equal(t, s, exp)
+		require.Equal(t, exp, s)
 	})
 
 	t.Run("Successfully validates IssuesEvent for reopened issue", func(t *testing.T) {
@@ -237,7 +237,7 @@ func TestParseIssuesEvent(t *testing.T) {
 		exp := fmt.Sprintf("Issue %d. %s for %s is reopened\n", issuenum, issuetitle, reponame)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
-		require.Equal(t, s, exp)
+		require.Equal(t, exp, s)
 	})
 
 	t.Run("Successfully validates IssuesEvent for assigned issue", func(t *testing.T) {
@@ -261,7 +261,7 @@ func TestParseIssuesEvent(t *testing.T) {
 		exp := fmt.Sprintf("Issue %d. %s for %s is assigned to %s\n", issuenum, issuetitle, reponame, assignee)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
-		require.Equal(t, s, exp)
+		require.Equal(t, exp, s)
 	})
 
 	t.Run("Successfully validates IssuesEvent for unassigned issue", func(t *testing.T) {
@@ -285,7 +285,7 @@ func TestParseIssuesEvent(t *testing.T) {
 		exp := fmt.Sprintf("Issue %d. %s for %s is unassigned from %s\n", issuenum, issuetitle, reponame, assignee)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
-		require.Equal(t, s, exp)
+		require.Equal(t, exp, s)
 	})
 
 	t.Run("Successfully validates IssuesEvent for labeled issue", func(t *testing.T) {
@@ -310,7 +310,7 @@ func TestParseIssuesEvent(t *testing.T) {
 		exp := fmt.Sprintf("Issue %d. %s for %s is labeled as %s\n", issuenum, issuetitle, reponame, label)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
-		require.Equal(t, s, exp)
+		require.Equal(t, exp, s)
 	})
 
 	t.Run("Successfully validates IssuesEvent for unlabeled issue", func(t *testing.T) {
@@ -335,6 +335,6 @@ func TestParseIssuesEvent(t *testing.T) {
 		exp := fmt.Sprintf("Issue %d. %s for %s is unlabeled from %s\n", issuenum, issuetitle, reponame, label)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
-		require.Equal(t, s, exp)
+		require.Equal(t, exp, s)
 	})
 }

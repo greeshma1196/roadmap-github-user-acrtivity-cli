@@ -160,7 +160,7 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			fmt.Print(s)
+			fmt.Println(s)
 		} else if event.Type == "PullRequestEvent" {
 			fmt.Printf("PullRequestEvent: %s\n", event.Repo.Name)
 		} else if event.Type == "PushEvent" {
