@@ -62,3 +62,25 @@ func TestParseCreateEvent(t *testing.T) {
 		require.EqualError(t, err, "unable to parse, reference type is empty")
 	})
 }
+
+func TestParseDeleteEvent(t *testing.T) {
+	t.Run("Successfully validates DeleteEvent for branch", func(t *testing.T) {
+		payload := `{"ref_type": "branch"}`
+		reponame := "sample_repo"
+		err := parseDeleteEvent(json.RawMessage(payload), reponame)
+		require.Nil(t, err)
+	})
+	t.Run("Successfully validates DeleteEvent for tag", func(t *testing.T) {
+		payload := `{"ref_type": "tag"}`
+		reponame := "sample_repo"
+		err := parseDeleteEvent(json.RawMessage(payload), reponame)
+		require.Nil(t, err)
+	})
+
+	t.Run("Successfully validates error for DeleteEvent", func(t *testing.T) {
+		payload := `{"ref_type": ""}`
+		reponame := "sample_repo"
+		err := parseDeleteEvent(json.RawMessage(payload), reponame)
+		require.EqualError(t, err, "unable to parse, reference type is empty")
+	})
+}
