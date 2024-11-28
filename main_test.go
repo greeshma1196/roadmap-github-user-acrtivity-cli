@@ -136,8 +136,9 @@ func TestParseDeleteEvent(t *testing.T) {
 						"pusher_type": "user"
 					}`
 		reponame := "devUser/my-repo"
+		exp := "unable to parse, reference type is empty"
 		s, err := parseDeleteEvent(json.RawMessage(payload), reponame)
-		require.EqualError(t, err, "unable to parse, reference type is empty")
+		require.EqualError(t, err, exp)
 		require.Empty(t, s)
 	})
 }
@@ -168,7 +169,7 @@ func TestParseIssuesEvent(t *testing.T) {
 		reponame := "devUser/awesome-project"
 		issuenum := 42
 		issuetitle := "Bug: Application crashes on startup"
-		exp := fmt.Sprintf("Issue %d. %s for %s is opened\n", issuenum, issuetitle, reponame)
+		exp := fmt.Sprintf("Issue %d. %s for %s is opened", issuenum, issuetitle, reponame)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
 		require.Equal(t, exp, s)
@@ -196,7 +197,7 @@ func TestParseIssuesEvent(t *testing.T) {
 		reponame := "devUser/awesome-project"
 		issuenum := 42
 		issuetitle := "Bug: Crash on startup (Updated)"
-		exp := fmt.Sprintf("Issue %d. %s for %s is edited\n", issuenum, issuetitle, reponame)
+		exp := fmt.Sprintf("Issue %d. %s for %s is edited", issuenum, issuetitle, reponame)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
 		require.Equal(t, exp, s)
@@ -215,7 +216,7 @@ func TestParseIssuesEvent(t *testing.T) {
 		reponame := "devUser/awesome-project"
 		issuenum := 42
 		issuetitle := "Bug: Crash on startup (Updated)"
-		exp := fmt.Sprintf("Issue %d. %s for %s is closed\n", issuenum, issuetitle, reponame)
+		exp := fmt.Sprintf("Issue %d. %s for %s is closed", issuenum, issuetitle, reponame)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
 		require.Equal(t, exp, s)
@@ -234,7 +235,7 @@ func TestParseIssuesEvent(t *testing.T) {
 		reponame := "devUser/awesome-project"
 		issuenum := 42
 		issuetitle := "Bug: Crash on startup (Updated)"
-		exp := fmt.Sprintf("Issue %d. %s for %s is reopened\n", issuenum, issuetitle, reponame)
+		exp := fmt.Sprintf("Issue %d. %s for %s is reopened", issuenum, issuetitle, reponame)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
 		require.Equal(t, exp, s)
@@ -258,7 +259,7 @@ func TestParseIssuesEvent(t *testing.T) {
 		issuenum := 42
 		issuetitle := "Bug: Crash on startup (Updated)"
 		assignee := "maintainerUser"
-		exp := fmt.Sprintf("Issue %d. %s for %s is assigned to %s\n", issuenum, issuetitle, reponame, assignee)
+		exp := fmt.Sprintf("Issue %d. %s for %s is assigned to %s", issuenum, issuetitle, reponame, assignee)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
 		require.Equal(t, exp, s)
@@ -282,7 +283,7 @@ func TestParseIssuesEvent(t *testing.T) {
 		issuenum := 42
 		issuetitle := "Bug: Crash on startup (Updated)"
 		assignee := "maintainerUser"
-		exp := fmt.Sprintf("Issue %d. %s for %s is unassigned from %s\n", issuenum, issuetitle, reponame, assignee)
+		exp := fmt.Sprintf("Issue %d. %s for %s is unassigned from %s", issuenum, issuetitle, reponame, assignee)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
 		require.Equal(t, exp, s)
@@ -307,7 +308,7 @@ func TestParseIssuesEvent(t *testing.T) {
 		issuenum := 42
 		issuetitle := "Bug: Crash on startup (Updated)"
 		label := "priority: high"
-		exp := fmt.Sprintf("Issue %d. %s for %s is labeled as %s\n", issuenum, issuetitle, reponame, label)
+		exp := fmt.Sprintf("Issue %d. %s for %s is labeled as %s", issuenum, issuetitle, reponame, label)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
 		require.Equal(t, exp, s)
@@ -332,9 +333,191 @@ func TestParseIssuesEvent(t *testing.T) {
 		issuenum := 42
 		issuetitle := "Bug: Crash on startup (Updated)"
 		label := "priority: high"
-		exp := fmt.Sprintf("Issue %d. %s for %s is unlabeled from %s\n", issuenum, issuetitle, reponame, label)
+		exp := fmt.Sprintf("Issue %d. %s for %s is unlabeled from %s", issuenum, issuetitle, reponame, label)
 		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
 		require.Equal(t, exp, s)
+	})
+
+	t.Run("Successfully validates error for IssuesEvent", func(t *testing.T) {
+		payload := `{
+						"action": "",
+						"issue": {
+							"id": 55667788,
+							"number": 42,
+							"title": "Bug: Crash on startup (Updated)",
+							"state": "open"
+						}
+					}`
+		reponame := "devUser/my-repo"
+		exp := "unable to parse"
+		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
+		require.EqualError(t, err, exp)
+		require.Empty(t, s)
+	})
+}
+
+func TestParsePullRequestEvent(t *testing.T) {
+	t.Run("Successfully validates PullRequestEvent for open pull request", func(t *testing.T) {
+		payload := `{
+						"action": "opened",
+						"number": 42,
+						"pull_request": {
+							"id": 789456,
+							"url": "https://api.github.com/repos/devUser/awesome-project/pulls/42",
+							"title": "Add feature X",
+							"state": "open",
+							"body": "This PR adds feature X with detailed description.",
+							"merged": false
+						}
+					}`
+		reponame := "devUser/awesome-project"
+		prnum := 42
+		prtitle := "Add feature X"
+		prurl := "https://api.github.com/repos/devUser/awesome-project/pulls/42"
+		exp := fmt.Sprintf("Pull request %d. %s for %s is opened at %s", prnum, prtitle, reponame, prurl)
+		s, err := parsePullRequestEvent(json.RawMessage(payload), reponame)
+		require.Nil(t, err)
+		require.Equal(t, exp, s)
+	})
+
+	t.Run("Successfully validates PullRequestEvent for closed pull request", func(t *testing.T) {
+		payload := `{
+						"action": "closed",
+						"number": 43,
+						"pull_request": {
+							"id": 789457,
+							"url": "https://api.github.com/repos/collabUser/project-repo/pulls/43",
+							"title": "Fix bug Y",
+							"state": "closed",
+							"body": "Bug Y has been fixed.",
+							"merged": true
+						}
+					}`
+		reponame := "devUser/awesome-project"
+		prnum := 43
+		prtitle := "Fix bug Y"
+		prurl := "https://api.github.com/repos/collabUser/project-repo/pulls/43"
+		exp := fmt.Sprintf("Pull request %d. %s for %s is closed at %s", prnum, prtitle, reponame, prurl)
+		s, err := parsePullRequestEvent(json.RawMessage(payload), reponame)
+		require.Nil(t, err)
+		require.Equal(t, exp, s)
+	})
+
+	t.Run("Successfully validates PullRequestEvent for reopened pull request", func(t *testing.T) {
+		payload := `{
+						"action": "reopened",
+						"number": 44,
+						"pull_request": {
+							"id": 789458,
+							"url": "https://api.github.com/repos/newUser/new-repo/pulls/44",
+							"title": "Improve docs",
+							"state": "open",
+							"body": "Reopening PR for further review.",
+							"merged": false
+						}
+					}`
+		reponame := "devUser/awesome-project"
+		prnum := 44
+		prtitle := "Improve docs"
+		prurl := "https://api.github.com/repos/newUser/new-repo/pulls/44"
+		exp := fmt.Sprintf("Pull request %d. %s for %s is reopened at %s", prnum, prtitle, reponame, prurl)
+		s, err := parsePullRequestEvent(json.RawMessage(payload), reponame)
+		require.Nil(t, err)
+		require.Equal(t, exp, s)
+	})
+
+	t.Run("Successfully validates PullRequestEvent for assigned pull request", func(t *testing.T) {
+		payload := `{
+						"action": "assigned",
+						"number": 45,
+						"pull_request": {
+							"id": 789459,
+							"url": "https://api.github.com/repos/reviewerUser/review-repo/pulls/45",
+							"title": "Add CI/CD pipeline",
+							"state": "open",
+							"body": "Adding continuous integration setup.",
+							"merged": false
+						},
+						"assignee": {
+							"login": "devUser",
+							"id": 123456
+						}
+					}`
+		reponame := "devUser/awesome-project"
+		prnum := 45
+		prtitle := "Add CI/CD pipeline"
+		prurl := "https://api.github.com/repos/reviewerUser/review-repo/pulls/45"
+		prassignee := "devUser"
+		exp := fmt.Sprintf("Pull request %d. %s for %s is assigned to %s, %s", prnum, prtitle, reponame, prassignee, prurl)
+		s, err := parsePullRequestEvent(json.RawMessage(payload), reponame)
+		require.Nil(t, err)
+		require.Equal(t, exp, s)
+	})
+
+	t.Run("Successfully validates PullRequestEvent for synchronized pull request", func(t *testing.T) {
+		payload := `{
+						"action": "synchronize",
+						"number": 46,
+						"pull_request": {
+							"id": 789460,
+							"url": "https://api.github.com/repos/leadMaintainer/core-repo/pulls/46",
+							"title": "Update README",
+							"state": "open",
+							"body": "Updated README with more details.",
+							"merged": false
+						}
+					}`
+		reponame := "devUser/awesome-project"
+		prnum := 46
+		prtitle := "Update README"
+		prurl := "https://api.github.com/repos/leadMaintainer/core-repo/pulls/46"
+		exp := fmt.Sprintf("Pull request %d. %s for %s is synchronized, %s", prnum, prtitle, reponame, prurl)
+		s, err := parsePullRequestEvent(json.RawMessage(payload), reponame)
+		require.Nil(t, err)
+		require.Equal(t, exp, s)
+	})
+
+	t.Run("Successfully validates PullRequestEvent for synchronized pull request", func(t *testing.T) {
+		payload := `{
+						"action": "synchronize",
+						"number": 46,
+						"pull_request": {
+							"id": 789460,
+							"url": "https://api.github.com/repos/leadMaintainer/core-repo/pulls/46",
+							"title": "Update README",
+							"state": "open",
+							"body": "Updated README with more details.",
+							"merged": false
+						}
+					}`
+		reponame := "devUser/awesome-project"
+		prnum := 46
+		prtitle := "Update README"
+		prurl := "https://api.github.com/repos/leadMaintainer/core-repo/pulls/46"
+		exp := fmt.Sprintf("Pull request %d. %s for %s is synchronized, %s", prnum, prtitle, reponame, prurl)
+		s, err := parsePullRequestEvent(json.RawMessage(payload), reponame)
+		require.Nil(t, err)
+		require.Equal(t, exp, s)
+	})
+
+	t.Run("Successfully validates error for PullRequestEvent", func(t *testing.T) {
+		payload := `{
+						"action": "",
+						"number": 46,
+						"pull_request": {
+							"id": 789460,
+							"url": "https://api.github.com/repos/leadMaintainer/core-repo/pulls/46",
+							"title": "Update README",
+							"state": "open",
+							"body": "Updated README with more details.",
+							"merged": false
+						}
+					}`
+		reponame := "devUser/my-repo"
+		exp := "unable to parse"
+		s, err := parseIssuesEvent(json.RawMessage(payload), reponame)
+		require.EqualError(t, err, exp)
+		require.Empty(t, s)
 	})
 }

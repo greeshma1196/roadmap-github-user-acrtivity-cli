@@ -37,6 +37,18 @@ type IssuesEvent struct {
 	} `json:"label"`
 }
 
+type PullRequestEvent struct {
+	Action      string `json:"action"`
+	Number      int    `json:"number"`
+	PullRequest struct {
+		Url   string `json:"url"`
+		Title string `json:"title"`
+	} `json:"pull_request"`
+	Assignee struct {
+		Login string `json:"login"`
+	} `json:"assignee"`
+}
+
 func checkStatusCode(statusCode int) (string, error) {
 	var s string
 	if statusCode == 200 || statusCode == 304 {
@@ -97,21 +109,45 @@ func parseIssuesEvent(payload json.RawMessage, reponame string) (string, error) 
 	}
 
 	if cresp.Action == "opened" {
-		s = fmt.Sprintf("Issue %d. %s for %s is opened\n", cresp.Issue.Number, cresp.Issue.Title, reponame)
+		s = fmt.Sprintf("Issue %d. %s for %s is opened", cresp.Issue.Number, cresp.Issue.Title, reponame)
 	} else if cresp.Action == "edited" {
-		s = fmt.Sprintf("Issue %d. %s for %s is edited\n", cresp.Issue.Number, cresp.Issue.Title, reponame)
+		s = fmt.Sprintf("Issue %d. %s for %s is edited", cresp.Issue.Number, cresp.Issue.Title, reponame)
 	} else if cresp.Action == "closed" {
-		s = fmt.Sprintf("Issue %d. %s for %s is closed\n", cresp.Issue.Number, cresp.Issue.Title, reponame)
+		s = fmt.Sprintf("Issue %d. %s for %s is closed", cresp.Issue.Number, cresp.Issue.Title, reponame)
 	} else if cresp.Action == "reopened" {
-		s = fmt.Sprintf("Issue %d. %s for %s is reopened\n", cresp.Issue.Number, cresp.Issue.Title, reponame)
+		s = fmt.Sprintf("Issue %d. %s for %s is reopened", cresp.Issue.Number, cresp.Issue.Title, reponame)
 	} else if cresp.Action == "assigned" {
-		s = fmt.Sprintf("Issue %d. %s for %s is assigned to %s\n", cresp.Issue.Number, cresp.Issue.Title, reponame, cresp.Assignee.Login)
+		s = fmt.Sprintf("Issue %d. %s for %s is assigned to %s", cresp.Issue.Number, cresp.Issue.Title, reponame, cresp.Assignee.Login)
 	} else if cresp.Action == "unassigned" {
-		s = fmt.Sprintf("Issue %d. %s for %s is unassigned from %s\n", cresp.Issue.Number, cresp.Issue.Title, reponame, cresp.Assignee.Login)
+		s = fmt.Sprintf("Issue %d. %s for %s is unassigned from %s", cresp.Issue.Number, cresp.Issue.Title, reponame, cresp.Assignee.Login)
 	} else if cresp.Action == "labeled" {
-		s = fmt.Sprintf("Issue %d. %s for %s is labeled as %s\n", cresp.Issue.Number, cresp.Issue.Title, reponame, cresp.Label.Name)
+		s = fmt.Sprintf("Issue %d. %s for %s is labeled as %s", cresp.Issue.Number, cresp.Issue.Title, reponame, cresp.Label.Name)
 	} else if cresp.Action == "unlabeled" {
-		s = fmt.Sprintf("Issue %d. %s for %s is unlabeled from %s\n", cresp.Issue.Number, cresp.Issue.Title, reponame, cresp.Label.Name)
+		s = fmt.Sprintf("Issue %d. %s for %s is unlabeled from %s", cresp.Issue.Number, cresp.Issue.Title, reponame, cresp.Label.Name)
+	} else {
+		return "", fmt.Errorf("unable to parse")
+	}
+
+	return s, nil
+}
+
+func parsePullRequestEvent(payload json.RawMessage, reponame string) (string, error) {
+	var s string
+	var cresp PullRequestEvent
+	if err := json.Unmarshal(payload, &cresp); err != nil {
+		panic(err)
+	}
+
+	if cresp.Action == "opened" {
+		s = fmt.Sprintf("Pull request %d. %s for %s is opened at %s", cresp.Number, cresp.PullRequest.Title, reponame, cresp.PullRequest.Url)
+	} else if cresp.Action == "closed" {
+		s = fmt.Sprintf("Pull request %d. %s for %s is closed at %s", cresp.Number, cresp.PullRequest.Title, reponame, cresp.PullRequest.Url)
+	} else if cresp.Action == "reopened" {
+		s = fmt.Sprintf("Pull request %d. %s for %s is reopened at %s", cresp.Number, cresp.PullRequest.Title, reponame, cresp.PullRequest.Url)
+	} else if cresp.Action == "assigned" {
+		s = fmt.Sprintf("Pull request %d. %s for %s is assigned to %s, %s", cresp.Number, cresp.PullRequest.Title, reponame, cresp.Assignee.Login, cresp.PullRequest.Url)
+	} else if cresp.Action == "synchronize" {
+		s = fmt.Sprintf("Pull request %d. %s for %s is synchronized, %s", cresp.Number, cresp.PullRequest.Title, reponame, cresp.PullRequest.Url)
 	} else {
 		return "", fmt.Errorf("unable to parse")
 	}
@@ -162,7 +198,11 @@ func main() {
 			}
 			fmt.Println(s)
 		} else if event.Type == "PullRequestEvent" {
-			fmt.Printf("PullRequestEvent: %s\n", event.Repo.Name)
+			s, err := parsePullRequestEvent(event.Payload, event.Repo.Name)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println(s)
 		} else if event.Type == "PushEvent" {
 			fmt.Printf("PushEvent: %s\n", event.Repo.Name)
 		} else if event.Type == "ReleaseEvent" {
