@@ -105,23 +105,40 @@ func TestParseCreateEvent(t *testing.T) {
 
 func TestParseDeleteEvent(t *testing.T) {
 	t.Run("Successfully validates DeleteEvent for branch", func(t *testing.T) {
-		payload := `{"ref_type": "branch"}`
-		reponame := "sample_repo"
-		err := parseDeleteEvent(json.RawMessage(payload), reponame)
+		payload := `{
+						"ref": "feature-branch",
+						"ref_type": "branch",
+						"pusher_type": "user"
+					}`
+		reponame := "devUser/my-repo"
+		exp := fmt.Sprintf("Deleted branch %s\n", reponame)
+		s, err := parseDeleteEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
+		require.Equal(t, exp, s)
 	})
 	t.Run("Successfully validates DeleteEvent for tag", func(t *testing.T) {
-		payload := `{"ref_type": "tag"}`
-		reponame := "sample_repo"
-		err := parseDeleteEvent(json.RawMessage(payload), reponame)
+		payload := `{
+						"ref": "v1.0.0",
+						"ref_type": "tag",
+						"pusher_type": "user"
+					}`
+		reponame := "devUser/my-repo"
+		exp := fmt.Sprintf("Deleted tag %s\n", reponame)
+		s, err := parseDeleteEvent(json.RawMessage(payload), reponame)
 		require.Nil(t, err)
+		require.Equal(t, exp, s)
 	})
 
 	t.Run("Successfully validates error for DeleteEvent", func(t *testing.T) {
-		payload := `{"ref_type": ""}`
-		reponame := "sample_repo"
-		err := parseDeleteEvent(json.RawMessage(payload), reponame)
+		payload := `{
+						"ref": "v1.0.0",
+						"ref_type": "",
+						"pusher_type": "user"
+					}`
+		reponame := "devUser/my-repo"
+		s, err := parseDeleteEvent(json.RawMessage(payload), reponame)
 		require.EqualError(t, err, "unable to parse, reference type is empty")
+		require.Empty(t, s)
 	})
 }
 

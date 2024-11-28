@@ -71,21 +71,22 @@ func parseCreateEvent(payload json.RawMessage, reponame string) (string, error) 
 	return s, nil
 }
 
-func parseDeleteEvent(payload json.RawMessage, reponame string) error {
+func parseDeleteEvent(payload json.RawMessage, reponame string) (string, error) {
+	var s string
 	var cresp DeleteEvent
 	if err := json.Unmarshal(payload, &cresp); err != nil {
 		panic(err)
 	}
 
 	if cresp.RefType == "branch" {
-		fmt.Printf("Deleted branch %s\n", reponame)
+		s = fmt.Sprintf("Deleted branch %s\n", reponame)
 	} else if cresp.RefType == "tag" {
-		fmt.Printf("Deleted tag %s\n", reponame)
+		s = fmt.Sprintf("Deleted tag %s\n", reponame)
 	} else {
-		return fmt.Errorf("unable to parse, reference type is empty")
+		return "", fmt.Errorf("unable to parse, reference type is empty")
 	}
 
-	return nil
+	return s, nil
 }
 
 func parseIssuesEvent(payload json.RawMessage, reponame string) (string, error) {
@@ -149,10 +150,11 @@ func main() {
 			}
 			fmt.Println(s)
 		} else if event.Type == "DeleteEvent" {
-			err := parseDeleteEvent(event.Payload, event.Repo.Name)
+			s, err := parseDeleteEvent(event.Payload, event.Repo.Name)
 			if err != nil {
 				panic(err)
 			}
+			fmt.Println(s)
 		} else if event.Type == "IssuesEvent" {
 			s, err := parseIssuesEvent(event.Payload, event.Repo.Name)
 			if err != nil {
