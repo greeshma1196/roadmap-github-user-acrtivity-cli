@@ -627,3 +627,106 @@ func TestParsePushEvent(t *testing.T) {
 		require.Empty(t, s)
 	})
 }
+
+func TestParseReleaseEvent(t *testing.T) {
+	t.Run("Successfully validates ReleaseEvent with action published", func(t *testing.T) {
+		payload := `{
+						"action": "published",
+						"release": {
+							"id": 987654,
+							"tag_name": "v1.0.0",
+							"target_commitish": "main",
+							"name": "Version 1.0.0",
+							"draft": false,
+							"prerelease": false,
+							"created_at": "2024-11-28T14:00:00Z",
+							"published_at": "2024-11-28T14:05:00Z",
+							"body": "Initial release of the project with all core features.",
+							"tarball_url": "https://api.github.com/repos/devUser/awesome-project/tarball/v1.0.0",
+							"zipball_url": "https://api.github.com/repos/devUser/awesome-project/zipball/v1.0.0",
+							"html_url": "https://github.com/devUser/awesome-project/releases/tag/v1.0.0"
+						}
+					}`
+		name := "Version 1.0.0"
+		url := "https://github.com/devUser/awesome-project/releases/tag/v1.0.0"
+		exp := fmt.Sprintf("%s published at %s", name, url)
+		s, err := parseReleaseEvent(json.RawMessage(payload))
+		require.Nil(t, err)
+		require.Equal(t, exp, s)
+	})
+	t.Run("Successfully validates ReleaseEvent with action prereleased", func(t *testing.T) {
+		payload := `{
+						"action": "prereleased",
+						"release": {
+							"id": 987655,
+							"tag_name": "v1.1.0-beta",
+							"target_commitish": "develop",
+							"name": "Version 1.1.0 Beta",
+							"draft": false,
+							"prerelease": true,
+							"created_at": "2024-11-28T14:10:00Z",
+							"published_at": "2024-11-28T14:15:00Z",
+							"body": "Beta release for testing new features.",
+							"tarball_url": "https://api.github.com/repos/collabUser/cool-tool/tarball/v1.1.0-beta",
+							"zipball_url": "https://api.github.com/repos/collabUser/cool-tool/zipball/v1.1.0-beta",
+							"html_url": "https://github.com/collabUser/cool-tool/releases/tag/v1.1.0-beta"
+						}
+					}`
+		name := "Version 1.1.0 Beta"
+		url := "https://github.com/collabUser/cool-tool/releases/tag/v1.1.0-beta"
+		exp := fmt.Sprintf("%s prereleased at %s", name, url)
+		s, err := parseReleaseEvent(json.RawMessage(payload))
+		require.Nil(t, err)
+		require.Equal(t, exp, s)
+	})
+
+	t.Run("Successfully validates ReleaseEvent with action created", func(t *testing.T) {
+		payload := `{
+						"action": "created",
+						"release": {
+							"id": 987656,
+							"tag_name": "v0.1.0",
+							"target_commitish": "main",
+							"name": "Draft Release",
+							"draft": true,
+							"prerelease": false,
+							"created_at": "2024-11-28T14:20:00Z",
+							"published_at": null,
+							"body": "Draft release for initial testing and feedback.",
+							"tarball_url": "https://api.github.com/repos/newUser/new-project/tarball/v0.1.0",
+							"zipball_url": "https://api.github.com/repos/newUser/new-project/zipball/v0.1.0",
+							"html_url": "https://github.com/newUser/new-project/releases/tag/v0.1.0"
+						}
+					}`
+		name := "Draft Release"
+		url := "https://github.com/newUser/new-project/releases/tag/v0.1.0"
+		exp := fmt.Sprintf("%s created at %s", name, url)
+		s, err := parseReleaseEvent(json.RawMessage(payload))
+		require.Nil(t, err)
+		require.Equal(t, exp, s)
+	})
+
+	t.Run("Successfully validates error for ReleaseEvent", func(t *testing.T) {
+		payload := `{
+						"action": "",
+						"release": {
+							"id": 987656,
+							"tag_name": "v0.1.0",
+							"target_commitish": "main",
+							"name": "Draft Release",
+							"draft": true,
+							"prerelease": false,
+							"created_at": "2024-11-28T14:20:00Z",
+							"published_at": null,
+							"body": "Draft release for initial testing and feedback.",
+							"tarball_url": "https://api.github.com/repos/newUser/new-project/tarball/v0.1.0",
+							"zipball_url": "https://api.github.com/repos/newUser/new-project/zipball/v0.1.0",
+							"html_url": "https://github.com/newUser/new-project/releases/tag/v0.1.0"
+						}
+					}`
+		exp := "unable to parse"
+		s, err := parseReleaseEvent(json.RawMessage(payload))
+		require.EqualError(t, err, exp)
+		require.Empty(t, s)
+	})
+}

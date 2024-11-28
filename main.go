@@ -53,6 +53,14 @@ type PushEvent struct {
 	Size int `json:"size"`
 }
 
+type ReleaseEvent struct {
+	Action  string `json:"action"`
+	Release struct {
+		Name string `json:"name"`
+		Url  string `json:"html_url"`
+	} `json:"release"`
+}
+
 func checkStatusCode(statusCode int) (string, error) {
 	var s string
 	if statusCode == 200 || statusCode == 304 {
@@ -178,6 +186,26 @@ func parsePushEvent(payload json.RawMessage, reponame string) (string, error) {
 
 }
 
+func parseReleaseEvent(payload json.RawMessage) (string, error) {
+	var s string
+	var cresp ReleaseEvent
+	if err := json.Unmarshal(payload, &cresp); err != nil {
+		panic(err)
+	}
+
+	if cresp.Action == "published" {
+		s = fmt.Sprintf("%s published at %s", cresp.Release.Name, cresp.Release.Url)
+	} else if cresp.Action == "prereleased" {
+		s = fmt.Sprintf("%s prereleased at %s", cresp.Release.Name, cresp.Release.Url)
+	} else if cresp.Action == "created" {
+		s = fmt.Sprintf("%s created at %s", cresp.Release.Name, cresp.Release.Url)
+	} else {
+		return "", fmt.Errorf("unable to parse")
+	}
+
+	return s, nil
+}
+
 func main() {
 	username := os.Args[1]
 
@@ -233,7 +261,11 @@ func main() {
 			}
 			fmt.Println(s)
 		} else if event.Type == "ReleaseEvent" {
-			fmt.Printf("ReleaseEvent: %s\n", event.Repo.Name)
+			s, err := parseReleaseEvent(event.Payload)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println(s)
 		}
 	}
 
