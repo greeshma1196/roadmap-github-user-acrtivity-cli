@@ -23,6 +23,20 @@ type DeleteEvent struct {
 	RefType string `json:"ref_type"`
 }
 
+type IssuesEvent struct {
+	Action string `json:"action"`
+	Issue  struct {
+		Number int    `json:"number"`
+		Title  string `json:"title"`
+	} `json:"issue"`
+	Assignee struct {
+		Login string `json:"login"`
+	} `json:"assignee"`
+	Label struct {
+		Name string `json:"name"`
+	} `json:"label"`
+}
+
 func checkStatusCode(statusCode int) error {
 
 	if statusCode == 200 || statusCode == 304 {
@@ -73,6 +87,36 @@ func parseDeleteEvent(payload json.RawMessage, reponame string) error {
 	return nil
 }
 
+func parseIssuesEvent(payload json.RawMessage, reponame string) (string, error) {
+	var s string
+	var cresp IssuesEvent
+	if err := json.Unmarshal(payload, &cresp); err != nil {
+		panic(err)
+	}
+
+	if cresp.Action == "opened" {
+		s = fmt.Sprintf("Issue %d. %s for %s is opened\n", cresp.Issue.Number, cresp.Issue.Title, reponame)
+	} else if cresp.Action == "edited" {
+		s = fmt.Sprintf("Issue %d. %s for %s is edited\n", cresp.Issue.Number, cresp.Issue.Title, reponame)
+	} else if cresp.Action == "closed" {
+		s = fmt.Sprintf("Issue %d. %s for %s is closed\n", cresp.Issue.Number, cresp.Issue.Title, reponame)
+	} else if cresp.Action == "reopened" {
+		s = fmt.Sprintf("Issue %d. %s for %s is reopened\n", cresp.Issue.Number, cresp.Issue.Title, reponame)
+	} else if cresp.Action == "assigned" {
+		s = fmt.Sprintf("Issue %d. %s for %s is assigned to %s\n", cresp.Issue.Number, cresp.Issue.Title, reponame, cresp.Assignee.Login)
+	} else if cresp.Action == "unassigned" {
+		s = fmt.Sprintf("Issue %d. %s for %s is unassigned from %s\n", cresp.Issue.Number, cresp.Issue.Title, reponame, cresp.Assignee.Login)
+	} else if cresp.Action == "labeled" {
+		s = fmt.Sprintf("Issue %d. %s for %s is labeled as %s\n", cresp.Issue.Number, cresp.Issue.Title, reponame, cresp.Label.Name)
+	} else if cresp.Action == "unlabeled" {
+		s = fmt.Sprintf("Issue %d. %s for %s is unlabeled from %s\n", cresp.Issue.Number, cresp.Issue.Title, reponame, cresp.Label.Name)
+	} else {
+		return "", fmt.Errorf("unable to parse")
+	}
+
+	return s, nil
+}
+
 func main() {
 	username := os.Args[1]
 
@@ -108,7 +152,11 @@ func main() {
 				panic(err)
 			}
 		} else if event.Type == "IssuesEvent" {
-			fmt.Printf("IssuesEvent: %s\n", event.Repo.Name)
+			s, err := parseIssuesEvent(event.Payload, event.Repo.Name)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Print(s)
 		} else if event.Type == "PullRequestEvent" {
 			fmt.Printf("PullRequestEvent: %s\n", event.Repo.Name)
 		} else if event.Type == "PushEvent" {
