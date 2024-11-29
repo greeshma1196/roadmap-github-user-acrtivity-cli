@@ -1,4 +1,4 @@
-module github.com/greeshma1196/roadmap-github-user-acrtivity-cli
+module github.com/greeshma1196/roadmap-github-user-activity-cli
 
 go 1.23
 
