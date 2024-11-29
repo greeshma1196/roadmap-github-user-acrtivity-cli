@@ -230,43 +230,28 @@ func main() {
 	}
 
 	for _, event := range cresp {
+
+		var s string
+		var err error
+
 		if event.Type == "CreateEvent" {
-			s, err := parseCreateEvent(event.Payload, event.Repo.Name)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println(s)
+			s, err = parseCreateEvent(event.Payload, event.Repo.Name)
 		} else if event.Type == "DeleteEvent" {
-			s, err := parseDeleteEvent(event.Payload, event.Repo.Name)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println(s)
+			s, err = parseDeleteEvent(event.Payload, event.Repo.Name)
 		} else if event.Type == "IssuesEvent" {
-			s, err := parseIssuesEvent(event.Payload, event.Repo.Name)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println(s)
+			s, err = parseIssuesEvent(event.Payload, event.Repo.Name)
 		} else if event.Type == "PullRequestEvent" {
-			s, err := parsePullRequestEvent(event.Payload, event.Repo.Name)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println(s)
+			s, err = parsePullRequestEvent(event.Payload, event.Repo.Name)
 		} else if event.Type == "PushEvent" {
-			s, err := parsePushEvent(event.Payload, event.Repo.Name)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println(s)
+			s, err = parsePushEvent(event.Payload, event.Repo.Name)
 		} else if event.Type == "ReleaseEvent" {
-			s, err := parseReleaseEvent(event.Payload)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println(s)
+			s, err = parseReleaseEvent(event.Payload)
 		}
+
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(s)
 	}
 
 }
